@@ -17,6 +17,8 @@ var land
 
 var player
 
+var wallSprite
+
 var enemies
 
 var gremlins
@@ -50,7 +52,6 @@ function create () {
   game.physics.enable(player, Phaser.Physics.ARCADE);
   player.body.maxVelocity.setTo(150, 150)
   player.body.collideWorldBounds = true
-  player.body.immovable = true
 
   // Add boundaries to sides
   wallSprite = [];
@@ -63,6 +64,8 @@ function create () {
     game.physics.enable(wallSprite[wallSprite.length -1], Phaser.Physics.ARCADE);
   }
   for (var i = 0; i < wallSprite.length; i++) {
+    wallSprite[i].body.immovable = true;
+    wallSprite[i].body.moves = false;
     game.physics.arcade.overlap(player, wallSprite[i]);
   }
 
@@ -77,7 +80,6 @@ function create () {
     gremlins.push(game.add.sprite(eX, eY, 'gremlin'));
     game.physics.enable(gremlins[gremlins.length -1], Phaser.Physics.ARCADE);
     gremlins[gremlins.length -1].body.collideWorldBounds = true
-    gremlins[gremlins.length -1].body.immovable = true
     gremlins[gremlins.length -1].animations.add('walk');
     gremlins[gremlins.length -1].animations.play('walk', 6, true);
   }
@@ -204,10 +206,22 @@ function onRemovePlayer (data) {
 }
 
 function update () {
+
+  for (var i = 0; i < wallSprite.length; i++) {
+    wallSprite[i].update()
+    game.physics.arcade.collide(player, wallSprite[i])
+  }
   for (var i = 0; i < enemies.length; i++) {
     if (enemies[i].alive) {
       enemies[i].update()
       game.physics.arcade.collide(player, enemies[i].player)
+    }
+  }
+
+  for (var i = 0; i < gremlins.length; i++) {
+    if (gremlins[i].alive) {
+      gremlins[i].update()
+      game.physics.arcade.collide(player, gremlins[i])
     }
   }
 

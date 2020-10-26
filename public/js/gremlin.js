@@ -5,4 +5,5 @@ class Gremlin extends Phaser.Physics.Arcade.Sprite {
         this.x = x;
         this.y = y;
         this.game.add.sprite(x, y, 'gremlin');
+        this.alive = true;
 }
