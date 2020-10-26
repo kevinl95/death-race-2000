@@ -1,11 +1,14 @@
 /* global Phaser RemotePlayer io */
 
-var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render })
+var game = new Phaser.Game(1000, 800, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render })
 
 function preload () {
-  game.load.image('earth', 'assets/light_sand.png')
-  game.load.spritesheet('dude', 'assets/dude.png', 64, 64)
-  game.load.spritesheet('enemy', 'assets/dude.png', 64, 64)
+  game.load.image('earth', 'assets/default.png')
+  game.load.image('playercar', 'assets/car.png')
+  game.load.image('othercar', 'assets/car2.png')
+  game.load.image('boundary', 'assets/boundary.png')
+  game.load.image('grave', 'assets/grave.png')
+  game.load.spritesheet('gremlin', 'assets/gremlins.png', 18, 24, 2);
 }
 
 var socket // Socket connection
@@ -16,35 +19,68 @@ var player
 
 var enemies
 
+var gremlins
+
 var currentSpeed = 0
 var cursors
 
 function create () {
   socket = io.connect()
 
-  // Resize our game world to be a 2000 x 2000 square
+  // Center the canvas
+  game.scale.pageAlignHorizontally = true;
+  game.scale.pageAlignVertically = true;
+
   game.world.setBounds(-500, -500, 1000, 1000)
 
   // Our tiled scrolling background
-  land = game.add.tileSprite(0, 0, 800, 600, 'earth')
+  land = game.add.tileSprite(0, 0, 1000, 1000, 'earth')
   land.fixedToCamera = true
 
   // The base of our player
   var startX = Math.round(Math.random() * (1000) - 500)
   var startY = Math.round(Math.random() * (1000) - 500)
-  player = game.add.sprite(startX, startY, 'dude')
+  player = game.add.sprite(startX, startY, 'playercar')
   player.anchor.setTo(0.5, 0.5)
-  player.animations.add('move', [0, 1, 2, 3, 4, 5, 6, 7], 20, true)
-  player.animations.add('stop', [3], 20, true)
+  //player.animations.add('move', [0, 1, 2, 3, 4, 5, 6, 7], 20, true)
+  //player.animations.add('stop', [3], 20, true)
 
   // This will force it to decelerate and limit its speed
   // player.body.drag.setTo(200, 200)
   game.physics.enable(player, Phaser.Physics.ARCADE);
-  player.body.maxVelocity.setTo(400, 400)
+  player.body.maxVelocity.setTo(150, 150)
   player.body.collideWorldBounds = true
+  player.body.immovable = true
+
+  // Add boundaries to sides
+  wallSprite = [];
+  for (i = 0; i < 100; i++) {
+    wallSprite.push(game.add.sprite(-400, -500 + i * 47, 'boundary'));
+    game.physics.enable(wallSprite[wallSprite.length -1], Phaser.Physics.ARCADE);
+  }
+  for (i = 0; i < 100; i++) {
+    wallSprite.push(game.add.sprite(400, -500 + i * 47, 'boundary'));
+    game.physics.enable(wallSprite[wallSprite.length -1], Phaser.Physics.ARCADE);
+  }
+  for (var i = 0; i < wallSprite.length; i++) {
+    game.physics.arcade.overlap(player, wallSprite[i]);
+  }
 
   // Create some baddies to waste :)
   enemies = []
+  gremlins = []
+
+  for (var i = 0; i < 20; i++) {
+    var eX = Math.round(Math.random() * (1000) - 500)
+    var eY = Math.round(Math.random() * (1000) - 500)
+    // parameters are x, y, width, height
+    gremlins.push(game.add.sprite(eX, eY, 'gremlin'));
+    game.physics.enable(gremlins[gremlins.length -1], Phaser.Physics.ARCADE);
+    gremlins[gremlins.length -1].body.collideWorldBounds = true
+    gremlins[gremlins.length -1].body.immovable = true
+    gremlins[gremlins.length -1].animations.add('walk');
+    gremlins[gremlins.length -1].animations.play('walk', 6, true);
+  }
 
   player.bringToTop()
 
@@ -53,6 +89,7 @@ function create () {
   game.camera.focusOnXY(0, 0)
 
   cursors = game.input.keyboard.createCursorKeys()
+  game.time.events.loop(Phaser.Timer.SECOND * 2, moveEnemies, this);
 
   // Start listening for events
   setEventHandlers()
@@ -107,6 +144,31 @@ function onNewPlayer (data) {
 
   // Add new player to the remote players array
   enemies.push(new RemotePlayer(data.id, game, player, data.x, data.y, data.angle))
+}
+
+// Move enemies
+function moveEnemies () {
+  console.log('Moving');
+  gremlins.forEach((enemy) => {
+    const randNumber = Math.floor((Math.random() * 4) + 1);
+
+    switch(randNumber) {
+      case 1:
+        enemy.body.velocity.x = 50;
+        break;
+      case 2:
+        enemy.body.velocity.x = -50;
+        break;
+      case 3:
+        enemy.body.velocity.y = 50;
+        break;
+      case 4:
+        enemy.body.velocity.y = -50;
+        break;
+      default:
+        enemy.body.velocity.x = 50;
+    }
+  });
 }
 
 // Move player

@@ -2,11 +2,18 @@
 <html lang='en'>
   <head>
     <meta charset='UTF-8' />
-    <title>Phaser multiplayer game</title>
+    <title>Multiplayer Death Race</title>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/>
     <link type='text/css' rel='stylesheet' href='/style/reset.css' />
     <link type='text/css' rel='stylesheet' href='/style/game.css' />
     <script src='/js/vendor/phaser.min.js'></script>
     <script src='/socket.io/socket.io.js'></script>
+    <style>
+      body {
+       background-image: url('cabinet.jpg');
+       background-size: 100% 100%;
+      }
+      </style>
   </head>
   <body>
     <script src='/js/RemotePlayer.js'></script>
