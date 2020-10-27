@@ -21,6 +21,8 @@ var wallSprite
 
 var enemies
 
+var graves
+
 var gremlins
 
 var currentSpeed = 0
@@ -50,8 +52,9 @@ function create () {
   // This will force it to decelerate and limit its speed
   // player.body.drag.setTo(200, 200)
   game.physics.enable(player, Phaser.Physics.ARCADE);
-  player.body.maxVelocity.setTo(150, 150)
+  player.body.maxVelocity.setTo(75, 75)
   player.body.collideWorldBounds = true
+  player.stopVelocityOnCollide = true;
 
   // Add boundaries to sides
   wallSprite = [];
@@ -71,6 +74,7 @@ function create () {
 
   // Create some baddies to waste :)
   enemies = []
+  graves = []
   gremlins = []
 
   for (var i = 0; i < 20; i++) {
@@ -109,6 +113,9 @@ var setEventHandlers = function () {
 
   // Player move message received
   socket.on('move player', onMovePlayer)
+
+  // Gremlin move message received
+  socket.on('move gremlin', onMoveGremlin)
 
   // Player removed message received
   socket.on('remove player', onRemovePlayer)
@@ -150,7 +157,6 @@ function onNewPlayer (data) {
 
 // Move enemies
 function moveEnemies () {
-  console.log('Moving');
   gremlins.forEach((enemy) => {
     const randNumber = Math.floor((Math.random() * 4) + 1);
 
@@ -205,11 +211,41 @@ function onRemovePlayer (data) {
   enemies.splice(enemies.indexOf(removePlayer), 1)
 }
 
+// Gremlin has moved
+function onMoveGremlin (data) {
+  // Find Gremlin in array
+  var moveGremlin = findGremlin(data)
+  console.log('MOVING GREM')
+  // Gremlin not found
+  if (!moveGremlin) {
+    console.log('Gremlin not found: ' + data)
+    return
+  }
+
+  // Update Gremlin position
+  moveGremlin.setX(data.x)
+  moveGremlin.setY(data.y)
+  moveGremlin.setAngle(data.angle)
+}
+
+function collidePlayerVsGremlin(_player, _gremlin) {
+    _gremlin.kill();
+    graves.push(game.add.sprite(_gremlin.world.x, _gremlin.world.y, 'grave'));
+    game.physics.enable(graves[graves.length -1], Phaser.Physics.ARCADE);
+    graves[graves.length -1].body.collideWorldBounds = true
+    graves[graves.length -1].body.immovable = true;
+    graves[graves.length -1].body.moves = false;
+  }
+
 function update () {
 
   for (var i = 0; i < wallSprite.length; i++) {
     wallSprite[i].update()
     game.physics.arcade.collide(player, wallSprite[i])
+  }
+  for (var i = 0; i < graves.length; i++) {
+    graves[i].update()
+    game.physics.arcade.collide(player, graves[i])
   }
   for (var i = 0; i < enemies.length; i++) {
     if (enemies[i].alive) {
@@ -219,10 +255,9 @@ function update () {
   }
 
   for (var i = 0; i < gremlins.length; i++) {
-    if (gremlins[i].alive) {
-      gremlins[i].update()
-      game.physics.arcade.collide(player, gremlins[i])
-    }
+    game.physics.arcade.collide(player, gremlins[i], collidePlayerVsGremlin)
+    socket.emit('move gremlin', { x: gremlins[i].x, y: gremlins[i].y, angle: gremlins[i].angle })
+    gremlins[i].update()
   }
 
   if (cursors.left.isDown) {
@@ -271,6 +306,20 @@ function playerById (id) {
   for (var i = 0; i < enemies.length; i++) {
     if (enemies[i].player.name === id) {
       return enemies[i]
+    }
+  }
+
+  return false
+}
+
+
+
+// Find Gremlin by ID
+function findGremlin (gremlin) {
+  var i
+  for (i = 0; i < gremlins.length; i++) {
+    if (gremlin == gremlins[i]) {
+      return gremlins[i]
     }
   }
 
