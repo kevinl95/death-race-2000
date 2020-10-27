@@ -2,7 +2,24 @@
 
 var game = new Phaser.Game(1000, 800, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render })
 
+//  The Google WebFont Loader will look for this object, so create it before loading the script.
+WebFontConfig = {
+
+    //  'active' means all requested fonts have finished loading
+    //  We set a 1 second delay before calling 'createText'.
+    //  For some reason if we don't the browser cannot render the text the first time it's created.
+    active: function() { game.time.events.add(Phaser.Timer.SECOND, createText, this); },
+
+    //  The Google Fonts we want to load (specify as many as you like in the array)
+    google: {
+      families: ['Press Start 2P']
+    }
+
+};
+
 function preload () {
+  //  Load the Google WebFont Loader script
+  game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
   game.load.image('earth', 'assets/default.png')
   game.load.image('playercar', 'assets/car.png')
   game.load.image('othercar', 'assets/car2.png')
@@ -28,8 +45,12 @@ var gremlins
 var currentSpeed = 0
 var cursors
 
+var countdown
+
 function create () {
   socket = io.connect()
+
+  game.initialTime = 90;
 
   // Center the canvas
   game.scale.pageAlignHorizontally = true;
@@ -46,17 +67,33 @@ function create () {
   var startY = Math.round(Math.random() * (1000) - 500)
   player = game.add.sprite(startX, startY, 'playercar')
   player.anchor.setTo(0.5, 0.5)
-  //player.animations.add('move', [0, 1, 2, 3, 4, 5, 6, 7], 20, true)
-  //player.animations.add('stop', [3], 20, true)
 
   // This will force it to decelerate and limit its speed
-  // player.body.drag.setTo(200, 200)
   game.physics.enable(player, Phaser.Physics.ARCADE);
   player.body.maxVelocity.setTo(75, 75)
   player.body.collideWorldBounds = true
   player.stopVelocityOnCollide = true;
 
   // Add boundaries to sides
+  createWalls();
+
+  // Create some baddies to waste :)
+  createEnemies();
+
+  player.bringToTop()
+
+  game.camera.follow(player)
+  game.camera.deadzone = new Phaser.Rectangle(150, 150, 500, 300)
+  game.camera.focusOnXY(0, 0)
+
+  cursors = game.input.keyboard.createCursorKeys()
+  game.time.events.loop(Phaser.Timer.SECOND * 2, moveEnemies, this);
+
+  // Start listening for events
+  setEventHandlers()
+}
+
+function createWalls() {
   wallSprite = [];
   for (i = 0; i < 100; i++) {
     wallSprite.push(game.add.sprite(-400, -500 + i * 47, 'boundary'));
@@ -71,15 +108,16 @@ function create () {
     wallSprite[i].body.moves = false;
     game.physics.arcade.overlap(player, wallSprite[i]);
   }
+}
 
-  // Create some baddies to waste :)
+function createEnemies() {
   enemies = []
   graves = []
   gremlins = []
 
   for (var i = 0; i < 20; i++) {
-    var eX = Math.round(Math.random() * (1000) - 500)
-    var eY = Math.round(Math.random() * (1000) - 500)
+    var eX = Math.round(Math.random() * (1000) - 300)
+    var eY = Math.round(Math.random() * (1000) - 300)
     // parameters are x, y, width, height
     gremlins.push(game.add.sprite(eX, eY, 'gremlin'));
     game.physics.enable(gremlins[gremlins.length -1], Phaser.Physics.ARCADE);
@@ -87,18 +125,48 @@ function create () {
     gremlins[gremlins.length -1].animations.add('walk');
     gremlins[gremlins.length -1].animations.play('walk', 6, true);
   }
+}
 
-  player.bringToTop()
+function createText() {
 
-  game.camera.follow(player)
-  game.camera.deadzone = new Phaser.Rectangle(150, 150, 500, 300)
-  game.camera.focusOnXY(0, 0)
+    countdown = game.add.text(game.camera.x, game.camera.y, 'Time: ' + formatTime(game.initialTime));
+    countdown.anchor.setTo(0.5);
+    countdown.font = 'Press Start 2P';
+    countdown.fontSize = 24;
 
-  cursors = game.input.keyboard.createCursorKeys()
-  game.time.events.loop(Phaser.Timer.SECOND * 2, moveEnemies, this);
+    countdown.align = 'center';
+    countdown.stroke = '#ffffff';
+    countdown.fill = '#ffffff';
+    countdown.strokeThickness = 2;
 
-  // Start listening for events
-  setEventHandlers()
+    // Each 1000 ms call onEvent
+    timedEvent = game.time.events.loop(Phaser.Timer.SECOND * 1, onCount, game);
+
+}
+
+function formatTime(seconds){
+    // Minutes
+    var minutes = Math.floor(seconds/60);
+    // Seconds
+    var partInSeconds = seconds%60;
+    // Adds left zeros to seconds
+    partInSeconds = partInSeconds.toString().padStart(2,'0');
+    // Returns formated time
+    return `${minutes}:${partInSeconds}`;
+}
+
+
+function onCount ()
+{
+    if (game.initialTime == 0) {
+      gremlins.forEach((enemy) => {
+        enemy.destroy();
+      });
+      createEnemies();
+      game.initialTime = 91;
+    }
+    game.initialTime -= 1; // One second
+    countdown.setText('Time: ' + formatTime(game.initialTime));
 }
 
 var setEventHandlers = function () {
@@ -124,12 +192,6 @@ var setEventHandlers = function () {
 // Socket connected
 function onSocketConnected () {
   console.log('Connected to socket server')
-
-  // Reset enemies on reconnect
-  enemies.forEach(function (enemy) {
-    enemy.player.kill()
-  })
-  enemies = []
 
   // Send local player data to the game server
   socket.emit('new player', { x: player.x, y: player.y, angle: player.angle })
