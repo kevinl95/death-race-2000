@@ -46,6 +46,10 @@ var currentSpeed = 0
 var cursors
 
 var countdown
+var playerscore
+var scoreval = 0
+var winningscore
+var winningval = 0
 
 function create () {
   socket = io.connect()
@@ -143,6 +147,26 @@ function createText() {
     countdown.fill = '#ffffff';
     countdown.strokeThickness = 1;
 
+    playerscore = game.add.text(250, 50, "Points: 0");
+    playerscore.anchor.setTo(0.5);
+    playerscore.font = 'Press Start 2P';
+    playerscore.fontSize = 24;
+    playerscore.fixedToCamera = true;
+    playerscore.align = 'center';
+    playerscore.stroke = '#ffffff';
+    playerscore.fill = '#ffffff';
+    playerscore.strokeThickness = 1;
+
+    winningscore = game.add.text(750, 50, "Top Score: 0");
+    winningscore.anchor.setTo(0.5);
+    winningscore.font = 'Press Start 2P';
+    winningscore.fontSize = 24;
+    winningscore.fixedToCamera = true;
+    winningscore.align = 'center';
+    winningscore.stroke = '#ffffff';
+    winningscore.fill = '#ffffff';
+    winningscore.strokeThickness = 1;
+
     // Each 1000 ms call onEvent
     timedEvent = game.time.events.loop(Phaser.Timer.SECOND * 1, onCount, game);
 
@@ -170,10 +194,14 @@ function onCount ()
         grave.destroy();
       });
       createEnemies();
+      scoreval = 0;
+      winningval = 0;
       game.initialTime = 91;
     }
     game.initialTime -= 1; // One second
     countdown.setText(formatTime(game.initialTime));
+    playerscore.setText("Points: " + scoreval.toString());
+    winningscore.setText("Top Score: " + winningval.toString());
 }
 
 var setEventHandlers = function () {
@@ -305,6 +333,10 @@ function collidePlayerVsGremlin(_player, _gremlin) {
     graves[graves.length -1].body.immovable = true;
     graves[graves.length -1].body.moves = false;
     createGremlin();
+    scoreval += 1;
+    if (scoreval > winningval) {
+      winningval = scoreval;
+    }
   }
 
 function update () {
