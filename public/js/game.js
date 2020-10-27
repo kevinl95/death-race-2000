@@ -110,20 +110,24 @@ function createWalls() {
   }
 }
 
+function createGremlin() {
+  var eX = Math.round(Math.random() * (1000) - 300)
+  var eY = Math.round(Math.random() * (1000) - 300)
+  // parameters are x, y, width, height
+  gremlins.push(game.add.sprite(eX, eY, 'gremlin'));
+  game.physics.enable(gremlins[gremlins.length -1], Phaser.Physics.ARCADE);
+  gremlins[gremlins.length -1].body.collideWorldBounds = true
+  gremlins[gremlins.length -1].animations.add('walk');
+  gremlins[gremlins.length -1].animations.play('walk', 6, true);
+}
+
 function createEnemies() {
   enemies = []
   graves = []
   gremlins = []
 
   for (var i = 0; i < 20; i++) {
-    var eX = Math.round(Math.random() * (1000) - 300)
-    var eY = Math.round(Math.random() * (1000) - 300)
-    // parameters are x, y, width, height
-    gremlins.push(game.add.sprite(eX, eY, 'gremlin'));
-    game.physics.enable(gremlins[gremlins.length -1], Phaser.Physics.ARCADE);
-    gremlins[gremlins.length -1].body.collideWorldBounds = true
-    gremlins[gremlins.length -1].animations.add('walk');
-    gremlins[gremlins.length -1].animations.play('walk', 6, true);
+    createGremlin();
   }
 }
 
@@ -161,6 +165,9 @@ function onCount ()
     if (game.initialTime == 0) {
       gremlins.forEach((enemy) => {
         enemy.destroy();
+      });
+      graves.forEach((grave) => {
+        grave.destroy();
       });
       createEnemies();
       game.initialTime = 91;
@@ -297,6 +304,7 @@ function collidePlayerVsGremlin(_player, _gremlin) {
     graves[graves.length -1].body.collideWorldBounds = true
     graves[graves.length -1].body.immovable = true;
     graves[graves.length -1].body.moves = false;
+    createGremlin();
   }
 
 function update () {
