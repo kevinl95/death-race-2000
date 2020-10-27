@@ -133,15 +133,15 @@ function createEnemies() {
 
 function createText() {
 
-    countdown = game.add.text(game.camera.x, game.camera.y, 'Time: ' + formatTime(game.initialTime));
+    countdown = game.add.text(500, 50, formatTime(game.initialTime));
     countdown.anchor.setTo(0.5);
     countdown.font = 'Press Start 2P';
     countdown.fontSize = 24;
-
+    countdown.fixedToCamera = true;
     countdown.align = 'center';
     countdown.stroke = '#ffffff';
     countdown.fill = '#ffffff';
-    countdown.strokeThickness = 2;
+    countdown.strokeThickness = 1;
 
     // Each 1000 ms call onEvent
     timedEvent = game.time.events.loop(Phaser.Timer.SECOND * 1, onCount, game);
@@ -173,7 +173,7 @@ function onCount ()
       game.initialTime = 91;
     }
     game.initialTime -= 1; // One second
-    countdown.setText('Time: ' + formatTime(game.initialTime));
+    countdown.setText(formatTime(game.initialTime));
 }
 
 var setEventHandlers = function () {
