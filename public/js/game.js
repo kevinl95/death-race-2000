@@ -20,6 +20,8 @@ WebFontConfig = {
 function preload () {
   //  Load the Google WebFont Loader script
   game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
+  game.load.audio('scream', 'assets/gremlin.mp3');
+  game.load.audio('background', 'assets/engine.mp3');
   game.load.image('earth', 'assets/default.png')
   game.load.image('playercar', 'assets/car.png')
   game.load.image('othercar', 'assets/car2.png')
@@ -41,6 +43,9 @@ var enemies
 var graves
 
 var gremlins
+
+var scream
+var background
 
 var currentSpeed = 0
 var cursors
@@ -93,8 +98,22 @@ function create () {
   cursors = game.input.keyboard.createCursorKeys()
   game.time.events.loop(Phaser.Timer.SECOND * 2, moveEnemies, this);
 
+  // Audio
+  scream = game.add.audio('scream');
+  background = game.add.audio('background');
+
   // Start listening for events
   setEventHandlers()
+  //  Being mp3 files these take time to decode, so we can't play them instantly
+      //  Using setDecodedCallback we can be notified when they're ALL ready for use.
+      //  The audio files could decode in ANY order, we can never be sure which it'll be.
+
+  game.sound.setDecodedCallback([scream, background, driving], start, this);
+
+}
+
+function start() {
+    background.loopFull(0.6);
 }
 
 function createWalls() {
@@ -327,6 +346,7 @@ function onMoveGremlin (data) {
 
 function collidePlayerVsGremlin(_player, _gremlin) {
     _gremlin.kill();
+    scream.play();
     graves.push(game.add.sprite(_gremlin.world.x, _gremlin.world.y, 'grave'));
     game.physics.enable(graves[graves.length -1], Phaser.Physics.ARCADE);
     graves[graves.length -1].body.collideWorldBounds = true
