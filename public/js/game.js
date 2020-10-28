@@ -151,6 +151,7 @@ function createEnemies() {
 
   for (var i = 0; i < 20; i++) {
     createGremlin();
+    socket.emit('move gremlin', { x: gremlins[i].x, y: gremlins[i].y, angle: gremlins[i].angle })
   }
 }
 
@@ -216,8 +217,10 @@ function onCount ()
       scoreval = 0;
       winningval = 0;
       game.initialTime = 91;
+      socket.emit('update time', { time: game.initialTime })
     }
     game.initialTime -= 1; // One second
+    socket.emit('update time', { time: game.initialTime })
     countdown.setText(formatTime(game.initialTime));
     playerscore.setText("Points: " + scoreval.toString());
     winningscore.setText("Top Score: " + winningval.toString());
@@ -238,6 +241,15 @@ var setEventHandlers = function () {
 
   // Gremlin move message received
   socket.on('move gremlin', onMoveGremlin)
+
+  // Grave move message received
+  socket.on('move grave', onMoveGrave)
+
+  // Update score
+  socket.on('update score', updateScore)
+
+  // Update time
+  socket.on('update time', updateTime)
 
   // Player removed message received
   socket.on('remove player', onRemovePlayer)
@@ -311,6 +323,16 @@ function onMovePlayer (data) {
   movePlayer.player.angle = data.angle
 }
 
+// Update time
+function updateTime (data) {
+  game.initialTime = data.time;
+}
+
+// Update score
+function updateScore (data) {
+  winningval = data.score;
+}
+
 // Remove player
 function onRemovePlayer (data) {
   var removePlayer = playerById(data.id)
@@ -331,7 +353,6 @@ function onRemovePlayer (data) {
 function onMoveGremlin (data) {
   // Find Gremlin in array
   var moveGremlin = findGremlin(data)
-  console.log('MOVING GREM')
   // Gremlin not found
   if (!moveGremlin) {
     console.log('Gremlin not found: ' + data)
@@ -344,6 +365,22 @@ function onMoveGremlin (data) {
   moveGremlin.setAngle(data.angle)
 }
 
+// Grave has moved
+function onMoveGrave (data) {
+  // Find Grave in array
+  var moveGrave = findGrave(data)
+  // Gremlin not found
+  if (!moveGrave) {
+    console.log('Grave not found: ' + data)
+    return
+  }
+
+  // Update Grave position
+  moveGrave.setX(data.x)
+  moveGrave.setY(data.y)
+  moveGrave.setAngle(data.angle)
+}
+
 function collidePlayerVsGremlin(_player, _gremlin) {
     _gremlin.kill();
     scream.play();
@@ -352,10 +389,13 @@ function collidePlayerVsGremlin(_player, _gremlin) {
     graves[graves.length -1].body.collideWorldBounds = true
     graves[graves.length -1].body.immovable = true;
     graves[graves.length -1].body.moves = false;
+    socket.emit('move grave', { x: graves[graves.length -1].x, y: graves[graves.length -1].y, angle: graves[graves.length -1].angle })
     createGremlin();
+    socket.emit('move gremlin', { x: gremlins[gremlins.length -1].x, y: gremlins[gremlins.length -1].y, angle: gremlins[gremlins.length -1].angle })
     scoreval += 1;
     if (scoreval > winningval) {
       winningval = scoreval;
+      socket.emit('update score', { score: winningval })
     }
   }
 
@@ -434,14 +474,24 @@ function playerById (id) {
   return false
 }
 
-
-
 // Find Gremlin by ID
 function findGremlin (gremlin) {
   var i
   for (i = 0; i < gremlins.length; i++) {
-    if (gremlin == gremlins[i]) {
+    if (gremlin === gremlins[i]) {
       return gremlins[i]
+    }
+  }
+
+  return false
+}
+
+// Find Grave by ID
+function findGrave (grave) {
+  var i
+  for (i = 0; i < graves.length; i++) {
+    if (grave === grave[i]) {
+      return grave[i]
     }
   }
 
