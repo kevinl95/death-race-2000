@@ -108,12 +108,12 @@ function create () {
       //  Using setDecodedCallback we can be notified when they're ALL ready for use.
       //  The audio files could decode in ANY order, we can never be sure which it'll be.
 
-  game.sound.setDecodedCallback([scream, background, driving], start, this);
+  game.sound.setDecodedCallback([scream, background], start, this);
 
 }
 
 function start() {
-    background.loopFull(0.6);
+    background.loopFull(0.7);
 }
 
 function createWalls() {
