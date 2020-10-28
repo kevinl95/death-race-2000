@@ -72,8 +72,8 @@ function create () {
   land.fixedToCamera = true
 
   // The base of our player
-  var startX = Math.round(Math.random() * (1000) - 500)
-  var startY = Math.round(Math.random() * (1000) - 500)
+  var startX = Math.round(Math.random() * (1000) - 300)
+  var startY = Math.round(Math.random() * (1000) - 300)
   player = game.add.sprite(startX, startY, 'playercar')
   player.anchor.setTo(0.5, 0.5)
 
@@ -134,8 +134,8 @@ function createWalls() {
 }
 
 function createGremlin() {
-  var eX = Math.round(Math.random() * (1000) - 300)
-  var eY = Math.round(Math.random() * (1000) - 300)
+  var eX = Math.round(Math.random() * (1000) - 500)
+  var eY = Math.round(Math.random() * (1000) - 500)
   // parameters are x, y, width, height
   gremlins.push(game.add.sprite(eX, eY, 'gremlin'));
   game.physics.enable(gremlins[gremlins.length -1], Phaser.Physics.ARCADE);
