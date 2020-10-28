@@ -72,8 +72,8 @@ function create () {
   land.fixedToCamera = true
 
   // The base of our player
-  var startX = Math.round(Math.random() * (1000) - 300)
-  var startY = Math.round(Math.random() * (1000) - 300)
+  var startX = Math.round(Math.random() * (1000) - 700)
+  var startY = Math.round(Math.random() * (1000) - 500)
   player = game.add.sprite(startX, startY, 'playercar')
   player.anchor.setTo(0.5, 0.5)
 
