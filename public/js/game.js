@@ -211,9 +211,11 @@ function onCount ()
 {
     if (game.initialTime == 0) {
       gremlins.forEach((enemy) => {
+        enemy.player.destroy()
         socket.emit('remove gremlin', {id: enemy.id})
       });
       graves.forEach((grave) => {
+        grave.player.destroy()
         socket.emit('remove grave', {id: grave.id})
       });
       createEnemies();
@@ -371,7 +373,9 @@ function updateTime (data) {
 
 // Update score
 function updateScore (data) {
-  winningval = data.score;
+  if (data.score > winningval) {
+    winningval = data.score;
+  }
 }
 
 // Remove player
