@@ -1,4 +1,4 @@
-/* global Phaser RemotePlayer io */
+/* global Phaser RemotePlayer RemoteGrave RemoteGremlin io */
 
 var game = new Phaser.Game(1000, 800, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render })
 
@@ -133,15 +133,17 @@ function createWalls() {
   }
 }
 
+function uuidv4() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}
+
 function createGremlin() {
   var eX = Math.round(Math.random() * (1000) - 500)
   var eY = Math.round(Math.random() * (1000) - 500)
-  // parameters are x, y, width, height
-  gremlins.push(game.add.sprite(eX, eY, 'gremlin'));
-  game.physics.enable(gremlins[gremlins.length -1], Phaser.Physics.ARCADE);
-  gremlins[gremlins.length -1].body.collideWorldBounds = true
-  gremlins[gremlins.length -1].animations.add('walk');
-  gremlins[gremlins.length -1].animations.play('walk', 6, true);
+  // Send local gremlin data to the game server
+  socket.emit('new gremlin', {id: uuidv4(), x: eX, y: eY, angle: 0 })
 }
 
 function createEnemies() {
@@ -149,9 +151,8 @@ function createEnemies() {
   graves = []
   gremlins = []
 
-  for (var i = 0; i < 20; i++) {
+  for (var i = 0; i < 5; i++) {
     createGremlin();
-    socket.emit('move gremlin', { x: gremlins[i].x, y: gremlins[i].y, angle: gremlins[i].angle })
   }
 }
 
@@ -236,6 +237,12 @@ var setEventHandlers = function () {
   // New player message received
   socket.on('new player', onNewPlayer)
 
+  // Listen for new gremlin message
+  socket.on('new gremlin', onNewGremlin)
+
+  // Listen for new grave message
+  socket.on('new grave', onNewGrave)
+
   // Player move message received
   socket.on('move player', onMovePlayer)
 
@@ -253,6 +260,12 @@ var setEventHandlers = function () {
 
   // Player removed message received
   socket.on('remove player', onRemovePlayer)
+
+  // Player removed message received
+  socket.on('remove gremlin', onRemoveGremlin)
+
+  // Player removed message received
+  socket.on('remove grave', onRemoveGrave)
 }
 
 // Socket connected
@@ -283,6 +296,34 @@ function onNewPlayer (data) {
   enemies.push(new RemotePlayer(data.id, game, player, data.x, data.y, data.angle))
 }
 
+// New gremlin has been added
+function onNewGremlin (data) {
+  console.log('New gremlin!')
+  console.log(data.id)
+  // Avoid possible duplicate gremlins
+  var duplicate = findGremlin(data.id)
+  if (duplicate) {
+    console.log('Duplicate gremlin!')
+    return
+  }
+
+  // Add new gremlin to the gremlins array
+  gremlins.push(new RemoteGremlin(data.id, game, player, data.x, data.y, 0))
+}
+
+// New grave has been added
+function onNewGrave (data) {
+  // Avoid possible duplicate gremlins
+  var duplicate = findGrave(data.id)
+  if (duplicate) {
+    console.log('Duplicate grave!')
+    return
+  }
+
+  // Add new grave to the gremlins array
+  graves.push(new RemoteGrave(data.id, game, player, data.x, data.y, 0))
+}
+
 // Move enemies
 function moveEnemies () {
   gremlins.forEach((enemy) => {
@@ -290,19 +331,19 @@ function moveEnemies () {
 
     switch(randNumber) {
       case 1:
-        enemy.body.velocity.x = 50;
+        enemy.player.body.velocity.x = 50;
         break;
       case 2:
-        enemy.body.velocity.x = -50;
+        enemy.player.body.velocity.x = -50;
         break;
       case 3:
-        enemy.body.velocity.y = 50;
+        enemy.player.body.velocity.y = 50;
         break;
       case 4:
-        enemy.body.velocity.y = -50;
+        enemy.player.body.velocity.y = -50;
         break;
       default:
-        enemy.body.velocity.x = 50;
+        enemy.player.body.velocity.x = 50;
     }
   });
 }
@@ -325,7 +366,9 @@ function onMovePlayer (data) {
 
 // Update time
 function updateTime (data) {
-  game.initialTime = data.time;
+  if (data.time < game.initialTime) {
+    game.initialTime = data.time;
+  }
 }
 
 // Update score
@@ -349,10 +392,42 @@ function onRemovePlayer (data) {
   enemies.splice(enemies.indexOf(removePlayer), 1)
 }
 
+// Remove gremlin
+function onRemoveGremlin (data) {
+  var removeGremlin = findGremlin(data.id)
+
+  // Gremlin not found
+  if (!removeGremlin) {
+    console.log('Gremlin not found: ', data.id)
+    return
+  }
+
+  removeGremlin.player.kill()
+
+  // Remove gremlin from array
+  gremlins.splice(gremlins.indexOf(removeGremlin), 1)
+}
+
+// Remove grave
+function onRemoveGrave (data) {
+  var removeGrave = findGrave(data.id)
+
+  // Grave not found
+  if (!removeGremlin) {
+    console.log('Grave not found: ', data.id)
+    return
+  }
+
+  removeGrave.player.kill()
+
+  // Remove grave from array
+  graves.splice(graves.indexOf(removeGrave), 1)
+}
+
 // Gremlin has moved
 function onMoveGremlin (data) {
   // Find Gremlin in array
-  var moveGremlin = findGremlin(data)
+  var moveGremlin = findGremlin(data.id)
   // Gremlin not found
   if (!moveGremlin) {
     console.log('Gremlin not found: ' + data)
@@ -362,13 +437,13 @@ function onMoveGremlin (data) {
   // Update Gremlin position
   moveGremlin.setX(data.x)
   moveGremlin.setY(data.y)
-  moveGremlin.setAngle(data.angle)
+  moveGremlin.setAngle(0)
 }
 
 // Grave has moved
 function onMoveGrave (data) {
   // Find Grave in array
-  var moveGrave = findGrave(data)
+  var moveGrave = findGrave(data.id)
   // Gremlin not found
   if (!moveGrave) {
     console.log('Grave not found: ' + data)
@@ -378,20 +453,14 @@ function onMoveGrave (data) {
   // Update Grave position
   moveGrave.setX(data.x)
   moveGrave.setY(data.y)
-  moveGrave.setAngle(data.angle)
+  moveGrave.setAngle(0)
 }
 
 function collidePlayerVsGremlin(_player, _gremlin) {
     _gremlin.kill();
     scream.play();
-    graves.push(game.add.sprite(_gremlin.world.x, _gremlin.world.y, 'grave'));
-    game.physics.enable(graves[graves.length -1], Phaser.Physics.ARCADE);
-    graves[graves.length -1].body.collideWorldBounds = true
-    graves[graves.length -1].body.immovable = true;
-    graves[graves.length -1].body.moves = false;
-    socket.emit('move grave', { x: graves[graves.length -1].x, y: graves[graves.length -1].y, angle: graves[graves.length -1].angle })
+    socket.emit('new grave', {id: uuidv4(), x: _gremlin.world.x, y: _gremlin.world.y, angle: 0 })
     createGremlin();
-    socket.emit('move gremlin', { x: gremlins[gremlins.length -1].x, y: gremlins[gremlins.length -1].y, angle: gremlins[gremlins.length -1].angle })
     scoreval += 1;
     if (scoreval > winningval) {
       winningval = scoreval;
@@ -407,7 +476,8 @@ function update () {
   }
   for (var i = 0; i < graves.length; i++) {
     graves[i].update()
-    game.physics.arcade.collide(player, graves[i])
+    socket.emit('move grave', {id: graves[i].id, x: graves[i].player.x, y: graves[i].player.y, angle: 0 })
+    game.physics.arcade.collide(player, graves[i].player)
   }
   for (var i = 0; i < enemies.length; i++) {
     if (enemies[i].alive) {
@@ -417,9 +487,11 @@ function update () {
   }
 
   for (var i = 0; i < gremlins.length; i++) {
-    game.physics.arcade.collide(player, gremlins[i], collidePlayerVsGremlin)
-    socket.emit('move gremlin', { x: gremlins[i].x, y: gremlins[i].y, angle: gremlins[i].angle })
     gremlins[i].update()
+    console.log('Updating gremlin')
+    console.log(gremlins[i])
+    socket.emit('move gremlin', {id: gremlins[i].id, x: gremlins[i].player.x, y: gremlins[i].player.y, angle: 0})
+    game.physics.arcade.collide(player, gremlins[i].player, collidePlayerVsGremlin)
   }
 
   if (cursors.left.isDown) {
@@ -475,10 +547,9 @@ function playerById (id) {
 }
 
 // Find Gremlin by ID
-function findGremlin (gremlin) {
-  var i
-  for (i = 0; i < gremlins.length; i++) {
-    if (gremlin === gremlins[i]) {
+function findGremlin (id) {
+  for (var i = 0; i < gremlins.length; i++) {
+    if (gremlins[i].id == id) {
       return gremlins[i]
     }
   }
@@ -487,11 +558,10 @@ function findGremlin (gremlin) {
 }
 
 // Find Grave by ID
-function findGrave (grave) {
-  var i
-  for (i = 0; i < graves.length; i++) {
-    if (grave === grave[i]) {
-      return grave[i]
+function findGrave (id) {
+  for (var i = 0; i < graves.length; i++) {
+    if ( graves[i].id == id) {
+      return graves[i]
     }
   }
 
