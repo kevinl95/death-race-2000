@@ -29,7 +29,7 @@ var RemoteGrave = function (index, game, player, startX, startY, startAngle) {
 RemoteGrave.prototype.update = function () {
   if (this.player.x !== this.lastPosition.x || this.player.y !== this.lastPosition.y || this.player.angle != this.lastPosition.angle) {
     this.player.play('move')
-    this.player.rotation = Math.PI + game.physics.arcade.angleToXY(this.player, this.lastPosition.x, this.lastPosition.y)
+    this.player.rotation = 0
   } else {
     this.player.play('stop')
   }
