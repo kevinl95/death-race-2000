@@ -1,14 +1,14 @@
 {
-  "name": "phaser-multiplayer-game",
+  "name": "",
   "version": "1.0.0",
-  "description": "Phaser example gone multiplayer!",
+  "description": "Phaser Death Race remake with multiplayer. Based on phaser-multiplayer-game by Francisco Dias.",
   "main": "lib/game.js",
   "scripts": {
     "start": "node .",
     "dev": "nodemon .",
     "lint": "standard --verbose | snazzy"
   },
-  "author": "Francisco Dias",
+  "author": "Kevin Loeffler",
   "license": "MIT",
   "dependencies": {
     "ecstatic": "^1.0.1",
