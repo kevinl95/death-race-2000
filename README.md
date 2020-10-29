@@ -1,7 +1,7 @@
 Multiplayer Death Race
 ===
 
-Multiplayer remake of the famous and controversial 1976 arcade game [Death Race](https://en.wikipedia.org/wiki/Death_Race_(1976_video_game) by Exidy. Developed using [phaser](http://phaser.io/)!
+Multiplayer remake of the famous and controversial 1976 arcade game [Death Race](https://en.wikipedia.org/wiki/Death_Race_(1976_video_game)) by Exidy. Developed using [phaser](http://phaser.io/)!
 
 
 
