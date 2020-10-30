@@ -143,6 +143,11 @@ function createGremlin() {
   socket.emit('new gremlin', {id: uuidv4(), x: eX, y: eY, angle: 0 })
 }
 
+function createGrave(posx, posy) {
+  // Send local grave data to the game server
+  socket.emit('new grave', {id: uuidv4(), x: posx, y: posy, angle: 0 })
+}
+
 function createText() {
 
     countdown = game.add.text(500, 50, formatTime(game.initialTime));
@@ -299,10 +304,6 @@ function onNewGremlin (data) {
 function onNewGrave (data) {
   // Avoid possible duplicate graves
   var duplicate = findGrave(data.id)
-  if (duplicate) {
-    return
-  }
-
   // Add new grave to the gremlins array
   graves.push(new RemoteGrave(data.id, game, player, data.x, data.y, 0))
 }
@@ -310,23 +311,24 @@ function onNewGrave (data) {
 // Move enemies
 function moveEnemies () {
   gremlins.forEach((enemy) => {
-    const randNumber = Math.floor((Math.random() * 4) + 1);
-
-    switch(randNumber) {
-      case 1:
-        enemy.player.body.velocity.x = 50;
-        break;
-      case 2:
-        enemy.player.body.velocity.x = -50;
-        break;
-      case 3:
-        enemy.player.body.velocity.y = 50;
-        break;
-      case 4:
-        enemy.player.body.velocity.y = -50;
-        break;
-      default:
-        enemy.player.body.velocity.x = 50;
+    if (enemy.player.body !== null) {
+      const randNumber = Math.floor((Math.random() * 4) + 1);
+      switch(randNumber) {
+        case 1:
+          enemy.player.body.velocity.x = 50;
+          break;
+        case 2:
+          enemy.player.body.velocity.x = -50;
+          break;
+        case 3:
+          enemy.player.body.velocity.y = 50;
+          break;
+        case 4:
+          enemy.player.body.velocity.y = -50;
+          break;
+        default:
+          enemy.player.body.velocity.x = 50;
+      }
     }
   });
 }
@@ -444,7 +446,8 @@ function onMoveGrave (data) {
 function collidePlayerVsGremlin(_player, _gremlin) {
     _gremlin.kill();
     scream.play();
-    socket.emit('new grave', {id: uuidv4(), x: _gremlin.world.x, y: _gremlin.world.y, angle: 0 })
+    console.log('Creating new grave')
+    createGrave(_gremlin.world.x, _gremlin.world.y)
     createGremlin();
     scoreval += 1;
     if (scoreval > winningval) {
@@ -460,8 +463,8 @@ function update () {
     game.physics.arcade.collide(player, wallSprite[i])
   }
   for (var i = 0; i < graves.length; i++) {
-    graves[i].update()
     socket.emit('move grave', {id: graves[i].id, x: graves[i].player.x, y: graves[i].player.y, angle: 0 })
+    graves[i].update()
     game.physics.arcade.collide(player, graves[i].player)
   }
   for (var i = 0; i < enemies.length; i++) {
@@ -472,8 +475,8 @@ function update () {
   }
 
   for (var i = 0; i < gremlins.length; i++) {
-    gremlins[i].update()
     socket.emit('move gremlin', {id: gremlins[i].id, x: gremlins[i].player.x, y: gremlins[i].player.y, angle: 0})
+    gremlins[i].update()
     game.physics.arcade.collide(player, gremlins[i].player, collidePlayerVsGremlin)
   }
 
