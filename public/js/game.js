@@ -207,11 +207,10 @@ function onCount ()
           gremlins[i].player.destroy()
         }
         catch (error){ /* ignore */ }
-        try {
-          graves[i].player.destroy()
-        }
-        catch (error){ /* ignore */ }
       }
+      graves.forEach((grave) => {
+        grave.player.destory()
+      });
       scoreval = 0;
       winningval = 0;
       game.initialTime = 91;
