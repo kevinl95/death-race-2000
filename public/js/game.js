@@ -145,8 +145,9 @@ function createGremlin() {
 
 function createGrave(posx, posy) {
   // Send local grave data to the game server
-  socket.emit('new grave', {id: uuidv4(), x: posx, y: posy, angle: 0 })
-  socket.emit('new grave', {id: uuidv4(), x: posx, y: posy, angle: 0 })
+  var name = uuidv4()
+  graves.push(new RemoteGrave(name, game, player, posx, posy, 0))
+  socket.emit('new grave', {id: name, x: posx, y: posy, angle: 0 })
 }
 
 function createText() {
@@ -305,6 +306,9 @@ function onNewGremlin (data) {
 function onNewGrave (data) {
   // Avoid possible duplicate graves
   var duplicate = findGrave(data.id)
+  if (duplicate) {
+    return
+  }
   // Add new grave to the gremlins array
   graves.push(new RemoteGrave(data.id, game, player, data.x, data.y, 0))
 }
