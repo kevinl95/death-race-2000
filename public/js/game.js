@@ -146,6 +146,7 @@ function createGremlin() {
 function createGrave(posx, posy) {
   // Send local grave data to the game server
   socket.emit('new grave', {id: uuidv4(), x: posx, y: posy, angle: 0 })
+  socket.emit('new grave', {id: uuidv4(), x: posx, y: posy, angle: 0 })
 }
 
 function createText() {
