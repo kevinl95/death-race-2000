@@ -143,8 +143,6 @@ function createGremlin() {
   var eX = Math.round(Math.random() * (1000) - 500)
   var eY = Math.round(Math.random() * (1000) - 500)
   // Send local gremlin data to the game server
-  console.log('New gremlin')
-  console.log(uuidv4());
   socket.emit('new gremlin', {id: uuidv4(), x: eX, y: eY, angle: 0 })
 }
 
@@ -307,7 +305,6 @@ function onNewGremlin (data) {
   if (duplicate) {
     return
   }
-  console.log('Actually adding gremlin')
   // Add new gremlin to the gremlins array
   gremlins.push(new RemoteGremlin(data.id, game, player, data.x, data.y, 0))
 }
@@ -398,7 +395,6 @@ function onRemovePlayer (data) {
 function onRemoveGremlin (data) {
   var removeGremlin = findGremlin(data.id)
   console.log('Removing gremlin')
-  console.log(data)
   // Gremlin not found
   if (!removeGremlin) {
     console.log('Gremlin not found: ', data.id)
