@@ -434,9 +434,9 @@ function onMoveGremlin (data) {
   }
 
   // Update Gremlin position
-  moveGremlin.setX(data.x)
-  moveGremlin.setY(data.y)
-  moveGremlin.setAngle(0)
+  moveGremlin.player.x = data.x
+  moveGremlin.player.y = data.y
+  moveGremlin.player.angle = data.angle
 }
 
 // Grave has moved
@@ -450,9 +450,9 @@ function onMoveGrave (data) {
   }
 
   // Update Grave position
-  moveGrave.setX(data.x)
-  moveGrave.setY(data.y)
-  moveGrave.setAngle(0)
+  moveGrave.player.x = data.x
+  moveGrave.player.y = data.y
+  moveGrave.player.angle = data.angle
 }
 
 function collidePlayerVsGremlin(_player, _gremlin) {
