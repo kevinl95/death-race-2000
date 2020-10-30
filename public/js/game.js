@@ -202,14 +202,10 @@ function formatTime(seconds){
 function onCount ()
 {
     if (game.initialTime == 0) {
-      gremlins.forEach((enemy) => {
-        enemy.player.destroy()
-        socket.emit('remove gremlin', {id: enemy.id})
-      });
-      graves.forEach((grave) => {
-        grave.player.destroy()
-        socket.emit('remove grave', {id: grave.id})
-      });
+      for (var i = 0; i < 20; i++) {
+        gremlins[i].player.destroy()
+        graves[i].player.destroy()
+      }
       scoreval = 0;
       winningval = 0;
       game.initialTime = 91;
