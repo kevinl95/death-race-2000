@@ -358,7 +358,7 @@ function onMovePlayer (data) {
   // Update player position
   movePlayer.player.x = data.x
   movePlayer.player.y = data.y
-  movePlayer.player.angle = 0
+  movePlayer.player.angle = data.angle
 }
 
 // Update time
