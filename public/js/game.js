@@ -86,9 +86,6 @@ function create () {
   // Add boundaries to sides
   createWalls();
 
-  // Create some baddies to waste :)
-  createEnemies();
-
   player.bringToTop()
 
   game.camera.follow(player)
@@ -144,16 +141,6 @@ function createGremlin() {
   var eY = Math.round(Math.random() * (1000) - 500)
   // Send local gremlin data to the game server
   socket.emit('new gremlin', {id: uuidv4(), x: eX, y: eY, angle: 0 })
-}
-
-function createEnemies() {
-  enemies = []
-  graves = []
-  gremlins = []
-
-  for (var i = 0; i < 5; i++) {
-    createGremlin();
-  }
 }
 
 function createText() {
@@ -216,7 +203,6 @@ function onCount ()
         grave.player.destroy()
         socket.emit('remove grave', {id: grave.id})
       });
-      createEnemies();
       scoreval = 0;
       winningval = 0;
       game.initialTime = 91;
