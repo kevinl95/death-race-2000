@@ -38,11 +38,11 @@ var player
 
 var wallSprite
 
-var enemies
+var enemies = []
 
-var graves
+var graves = []
 
-var gremlins
+var gremlins = []
 
 var scream
 var background
