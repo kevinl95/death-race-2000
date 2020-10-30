@@ -203,8 +203,14 @@ function onCount ()
 {
     if (game.initialTime == 0) {
       for (var i = 0; i < 20; i++) {
-        gremlins[i].player.destroy()
-        graves[i].player.destroy()
+        try {
+          gremlins[i].player.destroy()
+        }
+        catch (error){ /* ignore */ }
+        try {
+          graves[i].player.destroy()
+        }
+        catch (error){ /* ignore */ }
       }
       scoreval = 0;
       winningval = 0;
