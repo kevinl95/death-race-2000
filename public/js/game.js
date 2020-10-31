@@ -209,7 +209,7 @@ function onCount ()
         catch (error){ /* ignore */ }
       }
       graves.forEach((grave) => {
-        grave.player.destory()
+        grave.player.destroy()
       });
       scoreval = 0;
       winningval = 0;
